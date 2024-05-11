@@ -2,33 +2,36 @@ import { useEffect, useRef, useState } from "react";
 
 const useTimer = () => {
   const [time, setTime] = useState(0);
-  const requestRef = useRef(0);
-  const animate = (t: DOMHighResTimeStamp) => {
-    setTime(t);
-    console.log(t);
-    requestRef.current = requestAnimationFrame(animate);
+  const requestId = useRef(0);
+  const animate = () => {
+    setTime((prev) => prev + 1);
+    requestId.current = requestAnimationFrame(animate);
   };
-  const start = () => requestAnimationFrame(animate);
-  const stop = () => cancelAnimationFrame(requestRef.current);
+  const start = () => {
+    requestId.current = requestAnimationFrame(animate);
+  };
+  const stop = () => {
+    cancelAnimationFrame(requestId.current);
+  };
   const reset = () => {
     setTime(0);
   };
   useEffect(() => {
-    return () => cancelAnimationFrame(requestRef.current);
+    return () => cancelAnimationFrame(requestId.current);
   }, []);
 
   return { time, start, stop, reset };
 };
 
 function App() {
-  const { time, start, stop } = useTimer();
+  const { time, start, stop, reset } = useTimer();
   return (
     <>
       <div>{time}</div>
       <div>
         <button onClick={() => start()}>Start</button>
         <button onClick={() => stop()}>Stop</button>
-        <button>Reset</button>
+        <button onClick={() => reset()}>Reset</button>
       </div>
     </>
   );
