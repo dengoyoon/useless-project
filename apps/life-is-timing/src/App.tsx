@@ -23,15 +23,27 @@ const useTimer = () => {
   return { time, start, stop, reset };
 };
 
+const useToggle = (initState: boolean = false) => {
+  const [on, setOn] = useState(initState);
+  const toggle = () => setOn((prev) => !prev);
+  return { on, toggle };
+};
+
 function App() {
   const { time, start, stop, reset } = useTimer();
+  const { on, toggle } = useToggle();
   return (
     <>
       <div>{time}</div>
-      <div>
-        <button onClick={() => start()}>Start</button>
-        <button onClick={() => stop()}>Stop</button>
-        <button onClick={() => reset()}>Reset</button>
+      <div onClick={() => toggle()}>
+        {on ? (
+          <div>
+            <button onClick={() => stop()}>Stop</button>
+            <button onClick={() => reset()}>Reset</button>
+          </div>
+        ) : (
+          <button onClick={() => start()}>Start</button>
+        )}
       </div>
     </>
   );
