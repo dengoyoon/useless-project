@@ -2,11 +2,15 @@ import { useEffect, useRef, useState } from "react";
 
 const useTimer = () => {
   const [time, setTime] = useState(0);
+  const prevTime = useRef<number | null>(null);
   const [timerState, setTimerState] = useState("INIT");
   const requestId = useRef(0);
 
-  const animate = () => {
-    setTime((prevTime) => prevTime + 1);
+  const animate = (currentTime: DOMHighResTimeStamp) => {
+    if (prevTime.current === null) {
+      prevTime.current = currentTime;
+    }
+    setTime(currentTime - prevTime.current);
     requestId.current = requestAnimationFrame(animate);
   };
   const start = () => {
@@ -18,6 +22,7 @@ const useTimer = () => {
     cancelAnimationFrame(requestId.current);
   };
   const reset = () => {
+    prevTime.current = null;
     setTimerState("INIT");
     setTime(0);
   };
@@ -32,7 +37,7 @@ function App() {
   const { time, timerState, start, stop, reset } = useTimer();
   return (
     <>
-      <div>{time}</div>
+      <div>{(time / 1000).toFixed(4)}</div>
       <div>
         {timerState === "INIT" && (
           <button onClick={() => start()}>Start</button>
