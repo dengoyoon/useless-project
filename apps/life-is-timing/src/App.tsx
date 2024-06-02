@@ -3,6 +3,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 type Level = "EASY" | "NORMAL" | "HARD";
 type TimerState = "INIT" | "RUN" | "STOP";
 
+function* arrayLoopGenerator(arr: Array<() => void>): Generator<() => void> {
+  while (true) {
+    for (const a of arr) {
+      yield a;
+    }
+  }
+}
+
 const useTimer = () => {
   const [time, setTime] = useState(0);
   const prevTime = useRef<number | null>(null);
@@ -29,11 +37,17 @@ const useTimer = () => {
     setTimerState("INIT");
     setTime(0);
   };
+
+  const clickTimer = useMemo(
+    () => arrayLoopGenerator([start, stop, reset]),
+    []
+  );
+
   useEffect(() => {
     return () => cancelAnimationFrame(requestId.current);
   }, []);
 
-  return { time, timerState, start, stop, reset };
+  return { time, timerState, clickTimer };
 };
 
 const useGame = () => {
@@ -71,7 +85,7 @@ const useGame = () => {
 };
 
 function App() {
-  const { time, timerState, start, stop, reset } = useTimer();
+  const { time, timerState, clickTimer } = useTimer();
   const { level, goalTime, setLevel, displayTime, calculateMistake } =
     useGame();
 
@@ -80,45 +94,79 @@ function App() {
     "당신은 실패자 입니다.",
     "당신은 사람이 맞습니까?",
     "당신은 재능이 없습니다.",
+    "당신은 답이 없습니다.",
   ];
+
+  useEffect(() => {
+    const handleSpaceBarClick = (event: KeyboardEvent) => {
+      if (event.key === " ") {
+        clickTimer.next().value();
+      }
+    };
+    window.addEventListener("keydown", handleSpaceBarClick);
+    return () => {
+      window.removeEventListener("keydown", handleSpaceBarClick);
+    };
+  }, []);
+
   return (
-    <>
+    <div>
       <div>난이도 선택 : {level}</div>
       <div>
-        <button onClick={() => setLevel("EASY")}>EASY</button>
-        <button onClick={() => setLevel("NORMAL")}>NORMAL</button>
-        <button onClick={() => setLevel("HARD")}>HARD</button>
+        <button
+          disabled={timerState !== "INIT"}
+          onClick={() => setLevel("EASY")}
+        >
+          EASY
+        </button>
+        <button
+          disabled={timerState !== "INIT"}
+          onClick={() => setLevel("NORMAL")}
+        >
+          NORMAL
+        </button>
+        <button
+          disabled={timerState !== "INIT"}
+          onClick={() => setLevel("HARD")}
+        >
+          HARD
+        </button>
       </div>
       <div>당신의 목표는 {goalTime}초 입니다</div>
       <div>{displayTime(time)}</div>
-      <div>
-        {timerState === "INIT" && <button onClick={() => start()}>시작</button>}
-        {timerState === "RUN" && (
-          <button onClick={() => stop()}>지금이야!</button>
-        )}
-        {timerState === "STOP" && (
-          <div>
-            <button onClick={() => reset()}>다시?</button>
-            {mistakeTime === 0 && <div>최고에요 ^^</div>}
-            {mistakeTime < 0 && (
-              <div>
-                당신은 {displayTime(Math.abs(mistakeTime))}초 느렸습니다.
-              </div>
-            )}
-            {mistakeTime > 0 && (
-              <div>
-                당신은 {displayTime(Math.abs(mistakeTime))}초 빨랐습니다.
-              </div>
-            )}
-            {mistakeTime !== 0 && (
-              <div>
-                {failMessage[Math.floor(Math.random() * failMessage.length)]}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </>
+      <button
+        onKeyDown={(event) => {
+          event.stopPropagation();
+        }}
+        onClick={() => {
+          clickTimer.next().value();
+        }}
+      >
+        {
+          {
+            INIT: "시작",
+            RUN: "지금이야!",
+            STOP: "다시?",
+          }[timerState]
+        }
+      </button>
+      {timerState === "STOP" && (
+        <div>
+          {mistakeTime === 0 && <div>최고에요 ^^</div>}
+          {mistakeTime < 0 && (
+            <div>당신은 {displayTime(Math.abs(mistakeTime))}초 느렸습니다.</div>
+          )}
+          {mistakeTime > 0 && (
+            <div>당신은 {displayTime(Math.abs(mistakeTime))}초 빨랐습니다.</div>
+          )}
+          {mistakeTime !== 0 && (
+            <div>
+              {failMessage[Math.floor(Math.random() * failMessage.length)]}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
