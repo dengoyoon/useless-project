@@ -19,7 +19,7 @@ function App() {
 
   return (
     <div>
-      <div>난이도 선택 : {level}</div>
+      <div>난이도 선택택 : {level}</div>
       <div>
         <button
           disabled={timerState !== "INIT"}
