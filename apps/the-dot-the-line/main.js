@@ -7,11 +7,29 @@ canvas.setAttribute("height", window.innerHeight);
 const canvasWidth = canvas.width;
 const canvasHeight = canvas.height;
 
-const pi = Math.PI;
+class Dot {
+  constructor() {
+    this.reset();
+  }
+  move() {
+    this.x += Math.cos(this.directionAngle) * 0.5;
+    this.y += Math.sin(this.directionAngle) * 0.5;
+  }
+  reset() {
+    this.x = Math.floor(Math.random() * canvasWidth);
+    this.y = Math.floor(Math.random() * canvasHeight);
+    this.directionAngle = Math.random() * 2 * Math.PI;
+  }
+  isOutOfScreen() {
+    return (
+      this.x > canvasWidth || this.x < 0 || this.y > canvasHeight || this.y < 0
+    );
+  }
+}
 
 const drawCircle = (point, radius) => {
   ctx.beginPath();
-  ctx.arc(point.x, point.y, radius, 0, 2 * pi);
+  ctx.arc(point.x, point.y, radius, 0, 2 * Math.PI);
   ctx.fill();
   ctx.stroke();
 };
@@ -34,17 +52,17 @@ const getDistance = (point1, point2) => {
   );
 };
 
-const getRandomPoint = () => {
-  return {
-    x: Math.floor(Math.random() * canvasWidth),
-    y: Math.floor(Math.random() * canvasHeight),
-  };
-};
+// const getRandomPoint = () => {
+//   return {
+//     x: Math.floor(Math.random() * canvasWidth),
+//     y: Math.floor(Math.random() * canvasHeight),
+//   };
+// };
 
 const getPointArray = (size) => {
   const arr = [];
   for (let i = 0; i < size; i++) {
-    arr.push(getRandomPoint());
+    arr.push(new Dot());
   }
   return arr;
 };
@@ -55,6 +73,10 @@ const animate = () => {
   ctx.clearRect(0, 0, canvasWidth, canvasHeight);
   pointArray.forEach((currentPoint) => {
     drawCircle(currentPoint, 5);
+    currentPoint.move();
+    if (currentPoint.isOutOfScreen()) {
+      currentPoint.reset();
+    }
     pointArray.forEach((otherPoint) => {
       if (getDistance(currentPoint, otherPoint) <= 200) {
         drawLine(currentPoint, otherPoint);
